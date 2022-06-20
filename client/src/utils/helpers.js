@@ -6,7 +6,7 @@ export function pluralize(name, count) {
 }
 
 export function idbPromise(storeName, method, object) {
-  return newPromise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     // open connection to the database 'shop-shop' with the version of 1
     const request = window.indexedDB.open("shop-shop", 1);
 
@@ -27,42 +27,42 @@ export function idbPromise(storeName, method, object) {
       console.log("There was and error");
     };
 
-    // on database opoen success
+    // on database open success
     request.onsuccess = function (e) {
-      // save a refernce of the database to the 'db' variable
+      // save a reference of the database to the `db` variable
       db = request.result;
-      // open a tansaction do whatever we pass into 'storeName' (must match one fo the object sotre names)
+      // open a transaction do whatever we pass into `storeName` (must match one of the object store names)
       tx = db.transaction(storeName, "readwrite");
-      // save a reference to that object sotre
+      // save a reference to that object store
       store = tx.objectStore(storeName);
 
-      // if any errosrs, let us know
+      // if there's any errors, let us know
       db.onerror = function (e) {
         console.log("error", e);
       };
-    };
-
-    switch(method) {
-      case 'put':
-        store.put(object);
-        resolve(object);
-        break;
-      case 'get': 
-      const all = store.getAll();
-      all.onsuccess = function () {
-        resolve(all.result)
+      switch (method) {
+        case "put":
+          store.put(object);
+          resolve(object);
+          break;
+        case "get":
+          const all = store.getAll();
+          all.onsuccess = function () {
+            resolve(all.result);
+          };
+          break;
+        case "delete":
+          store.delete(object._id);
+          break;
+        default:
+          console.log("No valid method");
+          break;
       }
-      case 'delete':
-        store.delete(object._id)
-        break;
-      default:
-        console.log('NO valid method')
-        break;
-    }
 
-    // when the transaction is complete, close the connection
-    tx.oncomplete = function () {
-      db.close();
+      // when the transaction is complete, close the connection
+      tx.oncomplete = function () {
+        db.close();
+      };
     };
   });
 }
