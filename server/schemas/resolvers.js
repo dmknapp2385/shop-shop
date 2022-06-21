@@ -41,9 +41,9 @@ const resolvers = {
 
       throw new AuthenticationError("Not logged in");
     },
-    users: async() => {
+    users: async () => {
       return User.find();
-    }, 
+    },
 
     order: async (parent, { _id }, context) => {
       if (context.user) {
@@ -59,9 +59,9 @@ const resolvers = {
     },
 
     checkout: async (parent, args, context) => {
+      const url = new URL(context.headers.referer).origin;
       const order = new Order(args);
-      const products = await Product.find({ _id: {$in: [...args.products]}});
-    
+      const products = await Product.find({ _id: { $in: [...args.products] } });
 
       const line_items = [];
 
@@ -70,6 +70,7 @@ const resolvers = {
         const product = await stripe.products.create({
           name: products[i].name,
           description: products[i].description,
+          images: [`${url}/images/${products[i].images}`],
         });
 
         // generate price id using the product id
@@ -90,9 +91,8 @@ const resolvers = {
         payment_method_types: ["card"],
         line_items,
         mode: "payment",
-        success_url:
-          "https://example.com/success?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url: "https://example.com/cancel",
+        success_url: `${url}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${url}`,
       });
 
       return { session: session.id };
